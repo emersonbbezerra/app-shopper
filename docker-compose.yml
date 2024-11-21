@@ -1,0 +1,21 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGO_URI=mongodb://mongo_container:27017/app-shopper
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:6
+    container_name: mongo_container
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
