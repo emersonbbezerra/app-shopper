@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import express from 'express';
+import routes from '../src/routes/routes';
 import { Database } from './config/Database';
 
 dotenv.config();
@@ -16,6 +17,8 @@ async function startServer() {
 
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
+
+    app.use('/', routes);
 
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
