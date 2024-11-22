@@ -4,5 +4,5 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 RUN npm run build
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "npm run seed:drivers && node dist/index.js"]
 EXPOSE 8080

@@ -8,6 +8,7 @@ services:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
     depends_on:
       - mongodb
+    command: sh -c "npm run seed:drivers && node dist/index.js"
 
   mongodb:
     image: mongo:6
