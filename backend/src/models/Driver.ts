@@ -13,6 +13,7 @@ export interface IDriver extends Document {
 
 const driverSchema = new Schema<IDriver>(
   {
+    _id: { type: Number, required: true },
     name: { type: String, required: true },
     description: { type: String, required: true },
     vehicle: { type: String, required: true },
