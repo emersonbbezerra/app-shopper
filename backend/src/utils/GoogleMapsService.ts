@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { IGoogleMapsService } from '../interfaces/IGoogleMapsService';
 
-export class GoogleMapsService {
+export class GoogleMapsService implements IGoogleMapsService {
   private apiKey: string;
   private apiUri: string;
 
