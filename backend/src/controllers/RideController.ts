@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { ZodError } from 'zod';
+import { ConfirmRideResponseDTOType } from '../dtos/ConfirmRideResponseDTO';
 import { CreateRideDTO } from '../dtos/CreateRideDTO';
 import { EstimateRideRequestDTO } from '../dtos/EstimateRideRequestDTO';
+import { EstimateRideResponseDTOType } from '../dtos/EstimateRideResponseDTO';
 import { RideRepository } from '../repositories/RideRepository';
 import { RideService } from '../services/RideService';
 import { GoogleMapsService } from '../utils/GoogleMapsService';
@@ -23,7 +25,7 @@ export class RideController {
         routeDetails.distance
       );
 
-      const result = {
+      const result: EstimateRideResponseDTOType = {
         origin: {
           latitude: routeDetails.origin.latitude,
           longitude: routeDetails.origin.longitude,
@@ -53,7 +55,8 @@ export class RideController {
       if (error instanceof ZodError) {
         res.status(400).json({
           error_code: 'INVALID_DATA',
-          error_description: error.errors,
+          error_description:
+            'Os dados fornecidos no corpo da requisição são inválidos',
         });
       } else {
         res.status(500).json({
@@ -67,8 +70,11 @@ export class RideController {
   static async confirmRide(req: Request, res: Response) {
     try {
       const data = CreateRideDTO.parse(req.body);
-      const confirmedRide = await rideService.confirmRide(data);
-      res.status(200).json({ success: true, ride: confirmedRide });
+      await rideService.confirmRide(data);
+      const response: ConfirmRideResponseDTOType = {
+        success: true,
+      };
+      res.status(200).json(response);
     } catch (error) {
       if (error instanceof ZodError) {
         res.status(400).json({
