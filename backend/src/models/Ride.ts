@@ -11,6 +11,8 @@ export interface IRide extends Document {
     name: string;
   };
   value: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const rideSchema = new Schema<IRide>(

@@ -1,10 +1,19 @@
-import { CreateRideDTOType } from '../dtos/CreateRideDTO';
+import {
+  ConfirmRideResponseDTO,
+  ConfirmRideResponseDTOType,
+} from '../dtos/ConfirmRideResponseDTO';
+import { CreateRideRequestDTOType } from '../dtos/CreateRideRequestDTO';
 import { EstimateRideRequestDTOType } from '../dtos/EstimateRideRequestDTO';
 import {
   EstimateRideResponseDTO,
   EstimateRideResponseDTOType,
 } from '../dtos/EstimateRideResponseDTO';
+import {
+  RideHistoryResponseDTO,
+  RideHistoryResponseDTOType,
+} from '../dtos/RideHistoryResponseDTO';
 import { IGoogleMapsService } from '../interfaces/IGoogleMapsService';
+import { IRideQuery } from '../interfaces/IRideQuery';
 import { IRideRepository } from '../interfaces/IRideRepository';
 import { IRideService } from '../interfaces/IRideService';
 import Driver, { IDriver } from '../models/Driver';
@@ -30,43 +39,70 @@ export class RideService implements IRideService {
       destination
     );
 
-    const availableDrivers = await this.getAvailableDrivers(route.distance);
+    if (!route || !route.origin || !route.destination || !route.distance) {
+      throw new Error('Erro ao calcular a rota');
+    }
 
-    return EstimateRideResponseDTO.parse({
-      origin: {
-        latitude: route.origin.latitude,
-        longitude: route.origin.longitude,
-      },
-      destination: {
-        latitude: route.destination.latitude,
-        longitude: route.destination.longitude,
-      },
-      distance: route.distance / 1000,
-      duration: route.duration,
-      options: availableDrivers.map((driver) => ({
-        id: driver.id,
-        name: driver.name,
-        description: driver.description,
-        vehicle: driver.vehicle,
-        review: {
-          rating: driver.review.rating,
-          comment: driver.review.comment,
+    const availableDrivers = await this.getAvailableDrivers(route.distance!);
+
+    if (route.distance) {
+      return EstimateRideResponseDTO.parse({
+        origin: {
+          latitude: route.origin.latitude,
+          longitude: route.origin.longitude,
         },
-        value: (route.distance / 1000) * driver.ratePerKm,
+        destination: {
+          latitude: route.destination.latitude,
+          longitude: route.destination.longitude,
+        },
+        distance: route.distance / 1000,
+        duration: route.duration,
+        options: availableDrivers.map((driver) => ({
+          id: driver.id,
+          name: driver.name,
+          description: driver.description,
+          vehicle: driver.vehicle,
+          review: {
+            rating: driver.review?.rating || 0,
+            comment: driver.review?.comment || '',
+          },
+          value: route.distance
+            ? (route.distance / 1000) * driver.ratePerKm
+            : 0,
+        })),
+        routeResponse: route,
+      });
+    } else {
+      throw new Error('Erro: A rota não possui distância definida');
+    }
+  }
+
+  async confirmRide(
+    data: CreateRideRequestDTOType
+  ): Promise<ConfirmRideResponseDTOType> {
+    await this.rideRepository.save(data);
+    return ConfirmRideResponseDTO.parse({ success: true });
+  }
+
+  async getRideHistory(data: IRideQuery): Promise<RideHistoryResponseDTOType> {
+    const rides = await this.rideRepository.findByCustomerAndDriver(data);
+    const rideHistory = {
+      customer_id: data.customer_id,
+      rides: rides.map((ride) => ({
+        id: ride._id,
+        date: ride.createdAt,
+        origin: ride.origin,
+        destination: ride.destination,
+        distance: ride.distance,
+        duration: ride.duration,
+        driver: {
+          id: ride.driver.id,
+          name: ride.driver.name,
+        },
+        value: ride.value,
       })),
-      routeResponse: route,
-    });
-  }
-
-  async confirmRide(data: CreateRideDTOType) {
-    return await this.rideRepository.save(data);
-  }
-
-  async getRideHistory(customerId: string, driverId?: string) {
-    return await this.rideRepository.findByCustomerAndDriver(
-      customerId,
-      driverId
-    );
+    };
+    return RideHistoryResponseDTO.parse(rideHistory);
   }
 
   public async estimateAvailableDrivers(distance: number) {
@@ -88,8 +124,8 @@ export class RideService implements IRideService {
       minKm: driver.minKm,
       createdAt: driver.createdAt,
       review: {
-        rating: driver.rating,
-        comment: driver.comment,
+        rating: driver.review.rating,
+        comment: driver.review.comment,
       },
     }));
 
