@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { ConfirmRideResponseDTOType } from '../dtos/ConfirmRideResponseDTO';
-import { CreateRideDTO } from '../dtos/CreateRideRequestDTO';
+import { CreateRideRequestDTO } from '../dtos/CreateRideRequestDTO';
 import { EstimateRideRequestDTO } from '../dtos/EstimateRideRequestDTO';
 import { EstimateRideResponseDTOType } from '../dtos/EstimateRideResponseDTO';
+import { IRideQuery } from '../interfaces/IRideQuery';
 import { RideRepository } from '../repositories/RideRepository';
 import { RideService } from '../services/RideService';
 import { GoogleMapsService } from '../utils/GoogleMapsService';
@@ -69,7 +70,7 @@ export class RideController {
 
   static async confirmRide(req: Request, res: Response) {
     try {
-      const data = CreateRideDTO.parse(req.body);
+      const data = CreateRideRequestDTO.parse(req.body);
       await rideService.confirmRide(data);
       const response: ConfirmRideResponseDTOType = {
         success: true,
@@ -93,10 +94,11 @@ export class RideController {
   static async getRideHistory(req: Request, res: Response) {
     const customerId = req.params.customer_id;
     try {
-      const rideHistory = await rideService.getRideHistory(customerId);
+      const query: IRideQuery = { customer_id: customerId };
+      const rideHistory = await rideService.getRideHistory(query);
       res.status(200).json(rideHistory);
     } catch (error) {
-      console.error('Error occurred:', error); // Logando o erro
+      console.error('Error occurred:', error);
       if (error instanceof ZodError) {
         res.status(400).json({
           error_code: 'INVALID_DATA',
