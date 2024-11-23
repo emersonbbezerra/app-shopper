@@ -49,8 +49,8 @@ export class RideService implements IRideService {
         description: driver.description,
         vehicle: driver.vehicle,
         review: {
-          rating: driver.rating,
-          comment: '',
+          rating: driver.review.rating,
+          comment: driver.review.comment,
         },
         value: (route.distance / 1000) * driver.ratePerKm,
       })),
@@ -69,6 +69,10 @@ export class RideService implements IRideService {
     );
   }
 
+  public async estimateAvailableDrivers(distance: number) {
+    return await this.getAvailableDrivers(distance);
+  }
+
   private async getAvailableDrivers(distance: number) {
     const drivers: IDriver[] = await Driver.find({
       minKm: { $lte: distance / 1000 },
@@ -80,13 +84,12 @@ export class RideService implements IRideService {
       vehicle: driver.vehicle,
       value: (distance / 1000) * driver.ratePerKm,
       description: driver.description,
-      rating: driver.rating,
       ratePerKm: driver.ratePerKm,
       minKm: driver.minKm,
       createdAt: driver.createdAt,
       review: {
         rating: driver.rating,
-        comment: '',
+        comment: driver.comment,
       },
     }));
 

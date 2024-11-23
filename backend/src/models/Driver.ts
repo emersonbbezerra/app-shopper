@@ -5,6 +5,7 @@ export interface IDriver extends Document {
   description: string;
   vehicle: string;
   rating: number;
+  comment: string;
   ratePerKm: number;
   minKm: number;
   createdAt: Date;
@@ -18,6 +19,7 @@ const driverSchema = new Schema<IDriver>(
     description: { type: String, required: true },
     vehicle: { type: String, required: true },
     rating: { type: Number, required: true },
+    comment: { type: String, required: true },
     ratePerKm: { type: Number, required: true },
     minKm: { type: Number, required: true },
   },

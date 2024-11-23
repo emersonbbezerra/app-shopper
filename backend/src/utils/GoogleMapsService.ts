@@ -1,21 +1,22 @@
-import axios from 'axios';
+import { Client, TravelMode } from '@googlemaps/google-maps-services-js';
 import { IGoogleMapsService } from '../interfaces/IGoogleMapsService';
 
 export class GoogleMapsService implements IGoogleMapsService {
   private apiKey: string;
-  private apiUri: string;
+  private client: Client;
 
   constructor() {
     this.apiKey = process.env.GOOGLE_API_KEY || '';
-    this.apiUri = process.env.GOOGLE_MAPS_API_URI || '';
+    this.client = new Client({});
   }
 
   async calculateRoute(origin: string, destination: string) {
     try {
-      const response = await axios.get(this.apiUri, {
+      const response = await this.client.directions({
         params: {
           origin,
           destination,
+          mode: TravelMode.driving,
           key: this.apiKey,
         },
       });
@@ -24,14 +25,20 @@ export class GoogleMapsService implements IGoogleMapsService {
       const leg = route.legs[0];
 
       return {
-        origin: leg.start_address,
-        destination: leg.end_address,
+        origin: {
+          latitude: leg.start_location.lat,
+          longitude: leg.start_location.lng,
+        },
+        destination: {
+          latitude: leg.end_location.lat,
+          longitude: leg.end_location.lng,
+        },
         distance: leg.distance.value,
         duration: leg.duration.text,
       };
     } catch (error) {
       console.error('Error while fetching route:', error);
-      throw new Error('Error fetching route from Google Maps API');
+      throw new Error('Erro ao calcular a rota');
     }
   }
 }
