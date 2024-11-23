@@ -6,9 +6,11 @@ export const DriverInfoDTO = z.object({
 });
 
 export const CreateRideDTO = z.object({
-  customer_id: z.string().min(1, { message: 'Customer ID is required' }),
-  origin: z.string().min(1, { message: 'Origin is required' }),
-  destination: z.string().min(1, { message: 'Destination is required' }),
+  customer_id: z.string().min(1, { message: 'O ID do usuário é obrigatório.' }),
+  origin: z.string().min(1, { message: 'O endereço de Origem é obrigatório.' }),
+  destination: z
+    .string()
+    .min(1, { message: 'O endereço de Destino é obrigatório.' }),
   distance: z.number().positive(),
   duration: z.string().min(1),
   driver: DriverInfoDTO,

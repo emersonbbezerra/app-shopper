@@ -22,11 +22,6 @@ export class RideController {
           error_code: 'INVALID_DATA',
           error_description: error.errors,
         });
-      } else if (error instanceof Error) {
-        res.status(400).json({
-          error_code: 'UNKNOWN_ERROR',
-          error_description: error.message,
-        });
       } else {
         res.status(500).json({
           error_code: 'UNKNOWN_ERROR',
@@ -46,11 +41,6 @@ export class RideController {
         res.status(400).json({
           error_code: 'INVALID_DATA',
           error_description: error.errors,
-        });
-      } else if (error instanceof Error) {
-        res.status(400).json({
-          error_code: 'UNKNOWN_ERROR',
-          error_description: error.message,
         });
       } else {
         res.status(500).json({
@@ -75,11 +65,6 @@ export class RideController {
         res.status(400).json({
           error_code: 'INVALID_DATA',
           error_description: error.errors,
-        });
-      } else if (error instanceof Error) {
-        res.status(400).json({
-          error_code: 'UNKNOWN_ERROR',
-          error_description: error.message,
         });
       } else {
         res.status(500).json({

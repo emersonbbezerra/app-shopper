@@ -51,7 +51,7 @@ export class RideService implements IRideService {
       minKm: { $lte: distance / 1000 },
     });
 
-    return drivers.map((driver) => ({
+    const availableDrivers = drivers.map((driver) => ({
       id: driver._id as number,
       name: driver.name,
       vehicle: driver.vehicle,
@@ -63,5 +63,9 @@ export class RideService implements IRideService {
         comment: '',
       },
     }));
+
+    availableDrivers.sort((a, b) => a.value - b.value);
+
+    return availableDrivers;
   }
 }
