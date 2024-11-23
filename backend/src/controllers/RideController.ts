@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { ConfirmRideResponseDTOType } from '../dtos/ConfirmRideResponseDTO';
-import { CreateRideDTO } from '../dtos/CreateRideDTO';
+import { CreateRideDTO } from '../dtos/CreateRideRequestDTO';
 import { EstimateRideRequestDTO } from '../dtos/EstimateRideRequestDTO';
 import { EstimateRideResponseDTOType } from '../dtos/EstimateRideResponseDTO';
 import { RideRepository } from '../repositories/RideRepository';

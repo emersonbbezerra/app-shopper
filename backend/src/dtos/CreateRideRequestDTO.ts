@@ -5,7 +5,7 @@ export const DriverInfoDTO = z.object({
   name: z.string().min(1),
 });
 
-export const CreateRideDTO = z.object({
+export const CreateRideRequestDTO = z.object({
   customer_id: z.string().min(1, { message: 'O ID do usuário é obrigatório.' }),
   origin: z.string().min(1, { message: 'O endereço de Origem é obrigatório.' }),
   destination: z
@@ -17,4 +17,4 @@ export const CreateRideDTO = z.object({
   value: z.number().positive(),
 });
 
-export type CreateRideDTOType = z.infer<typeof CreateRideDTO>;
+export type CreateRideRequestDTOType = z.infer<typeof CreateRideRequestDTO>;

@@ -1,32 +1,16 @@
-import { CreateRideDTOType } from '../dtos/CreateRideDTO';
+import { ConfirmRideResponseDTOType } from '../dtos/ConfirmRideResponseDTO';
+import { CreateRideRequestDTOType } from '../dtos/CreateRideRequestDTO';
 import { EstimateRideRequestDTOType } from '../dtos/EstimateRideRequestDTO';
-import { IRide } from '../models/Ride';
+import { EstimateRideResponseDTOType } from '../dtos/EstimateRideResponseDTO';
+import { RideHistoryResponseDTOType } from '../dtos/RideHistoryResponseDTO';
+import { IRideQuery } from './IRideQuery';
 
 export interface IRideService {
-  estimateRide(data: EstimateRideRequestDTOType): Promise<{
-    origin: {
-      latitude: number;
-      longitude: number;
-    };
-    destination: {
-      latitude: number;
-      longitude: number;
-    };
-    distance: number;
-    duration: string;
-    options: {
-      id: number;
-      name: string;
-      description: string;
-      vehicle: string;
-      review: {
-        rating: number;
-        comment: string;
-      };
-      value: number;
-    }[];
-    routeResponse: object;
-  }>;
-  confirmRide(data: CreateRideDTOType): Promise<IRide>;
-  getRideHistory(customerId: string, driverId?: string): Promise<IRide[]>;
+  estimateRide(
+    data: EstimateRideRequestDTOType
+  ): Promise<EstimateRideResponseDTOType>;
+  confirmRide(
+    data: CreateRideRequestDTOType
+  ): Promise<ConfirmRideResponseDTOType>;
+  getRideHistory(data: IRideQuery): Promise<RideHistoryResponseDTOType>;
 }

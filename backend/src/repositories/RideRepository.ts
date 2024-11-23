@@ -1,4 +1,4 @@
-import { CreateRideDTOType } from '../dtos/CreateRideDTO';
+import { CreateRideDTOType } from '../dtos/CreateRideRequestDTO';
 import { IRideQuery } from '../interfaces/IRideQuery';
 import { IRideRepository } from '../interfaces/IRideRepository';
 import Ride, { IRide } from '../models/Ride';
