@@ -1,8 +1,14 @@
 import { z } from 'zod';
 
 export const EstimateRideResponseDTO = z.object({
-  origin: z.string(),
-  destination: z.string(),
+  origin: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  }),
+  destination: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  }),
   distance: z.number(),
   duration: z.string(),
   options: z.array(
@@ -18,6 +24,7 @@ export const EstimateRideResponseDTO = z.object({
       value: z.number(),
     })
   ),
+  routeResponse: z.object({}),
 });
 
 export type EstimateRideResponseDTOType = z.infer<

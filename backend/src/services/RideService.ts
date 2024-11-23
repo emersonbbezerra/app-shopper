@@ -1,5 +1,9 @@
 import { CreateRideDTOType } from '../dtos/CreateRideDTO';
 import { EstimateRideRequestDTOType } from '../dtos/EstimateRideRequestDTO';
+import {
+  EstimateRideResponseDTO,
+  EstimateRideResponseDTOType,
+} from '../dtos/EstimateRideResponseDTO';
 import { IGoogleMapsService } from '../interfaces/IGoogleMapsService';
 import { IRideRepository } from '../interfaces/IRideRepository';
 import { IRideService } from '../interfaces/IRideService';
@@ -17,7 +21,9 @@ export class RideService implements IRideService {
     this.googleMapsService = googleMapsService;
   }
 
-  async estimateRide(data: EstimateRideRequestDTOType) {
+  async estimateRide(
+    data: EstimateRideRequestDTOType
+  ): Promise<EstimateRideResponseDTOType> {
     const { origin, destination } = data;
     const route = await this.googleMapsService.calculateRoute(
       origin,
@@ -26,13 +32,30 @@ export class RideService implements IRideService {
 
     const availableDrivers = await this.getAvailableDrivers(route.distance);
 
-    return {
-      origin: route.origin,
-      destination: route.destination,
+    return EstimateRideResponseDTO.parse({
+      origin: {
+        latitude: route.origin.latitude,
+        longitude: route.origin.longitude,
+      },
+      destination: {
+        latitude: route.destination.latitude,
+        longitude: route.destination.longitude,
+      },
       distance: route.distance / 1000,
       duration: route.duration,
-      options: availableDrivers,
-    };
+      options: availableDrivers.map((driver) => ({
+        id: driver.id,
+        name: driver.name,
+        description: driver.description,
+        vehicle: driver.vehicle,
+        review: {
+          rating: driver.rating,
+          comment: '',
+        },
+        value: (route.distance / 1000) * driver.ratePerKm,
+      })),
+      routeResponse: route,
+    });
   }
 
   async confirmRide(data: CreateRideDTOType) {
@@ -58,6 +81,9 @@ export class RideService implements IRideService {
       value: (distance / 1000) * driver.ratePerKm,
       description: driver.description,
       rating: driver.rating,
+      ratePerKm: driver.ratePerKm,
+      minKm: driver.minKm,
+      createdAt: driver.createdAt,
       review: {
         rating: driver.rating,
         comment: '',

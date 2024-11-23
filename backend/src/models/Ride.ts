@@ -1,28 +1,49 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { IDriver } from './Driver';
 
 export interface IRide extends Document {
-  customer_id: string;
-  origin: string;
-  destination: string;
+  origin: {
+    latitude: string;
+    longitude: string;
+  };
+  destination: {
+    latitude: string;
+    longitude: string;
+  };
   distance: number;
   duration: string;
-  driver: { id: number; name: string };
+  options: IDriver[];
   value: number;
   createdAt: Date;
 }
 
 const rideSchema = new Schema<IRide>(
   {
-    customer_id: { type: String, required: true },
-    origin: { type: String, required: true },
-    destination: { type: String, required: true },
+    origin: {
+      latitude: { type: String, required: true },
+      longitude: { type: String, required: true },
+    },
+    destination: {
+      latitude: { type: String, required: true },
+      longitude: { type: String, required: true },
+    },
     distance: { type: Number, required: true },
     duration: { type: String, required: true },
-    driver: {
-      id: { type: Number, required: true },
-      name: { type: String, required: true },
-    },
+    options: [
+      {
+        id: Number,
+        name: String,
+        description: String,
+        vehicle: String,
+        review: {
+          rating: Number,
+          comment: String,
+        },
+        value: { type: Number, required: true },
+      },
+    ],
     value: { type: Number, required: true },
+    createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

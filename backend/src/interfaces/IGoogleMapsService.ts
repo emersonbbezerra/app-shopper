@@ -3,8 +3,14 @@ export interface IGoogleMapsService {
     origin: string,
     destination: string
   ): Promise<{
-    origin: string;
-    destination: string;
+    origin: {
+      latitude: number;
+      longitude: number;
+    };
+    destination: {
+      latitude: number;
+      longitude: number;
+    };
     distance: number;
     duration: string;
   }>;
