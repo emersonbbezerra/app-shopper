@@ -62,7 +62,7 @@ export class RideController {
       } else {
         res.status(500).json({
           error_code: 'UNKNOWN_ERROR',
-          error_description: 'An unknown error occurred',
+          error_description: 'Um erro desconhecido ocorreu',
         });
       }
     }
@@ -80,12 +80,31 @@ export class RideController {
       if (error instanceof ZodError) {
         res.status(400).json({
           error_code: 'INVALID_DATA',
-          error_description: error.errors,
+          error_description:
+            'Os dados fornecidos no corpo da requisição são inválidos',
         });
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error
+      ) {
+        if (error.message === 'Motorista não encontrado') {
+          res.status(404).json({
+            error_code: 'DRIVER_NOT_FOUND',
+            error_description: 'Motorista não encontrado',
+          });
+        } else if (
+          error.message === 'Quilometragem inválida para o motorista.'
+        ) {
+          res.status(406).json({
+            error_code: 'INVALID_DISTANCE',
+            error_description: 'Quilometragem inválida para o motorista',
+          });
+        }
       } else {
         res.status(500).json({
           error_code: 'UNKNOWN_ERROR',
-          error_description: 'An unknown error occurred',
+          error_description: 'Um erro desconhecido ocorreu',
         });
       }
     }
@@ -107,7 +126,7 @@ export class RideController {
       } else {
         res.status(500).json({
           error_code: 'UNKNOWN_ERROR',
-          error_description: 'An unknown error occurred',
+          error_description: 'Um erro desconhecido ocorreu',
         });
       }
     }

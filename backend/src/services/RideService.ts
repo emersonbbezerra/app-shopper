@@ -1,8 +1,8 @@
+import { ConfirmRideResponseDTOType } from '../dtos/ConfirmRideResponseDTO';
 import {
-  ConfirmRideResponseDTO,
-  ConfirmRideResponseDTOType,
-} from '../dtos/ConfirmRideResponseDTO';
-import { CreateRideRequestDTOType } from '../dtos/CreateRideRequestDTO';
+  CreateRideRequestDTO,
+  CreateRideRequestDTOType,
+} from '../dtos/CreateRideRequestDTO';
 import { EstimateRideRequestDTOType } from '../dtos/EstimateRideRequestDTO';
 import {
   EstimateRideResponseDTO,
@@ -80,8 +80,36 @@ export class RideService implements IRideService {
   async confirmRide(
     data: CreateRideRequestDTOType
   ): Promise<ConfirmRideResponseDTOType> {
-    await this.rideRepository.save(data);
-    return ConfirmRideResponseDTO.parse({ success: true });
+    CreateRideRequestDTO.parse(data);
+
+    if (!data.driver.id) {
+      throw new Error('ID do motorista inválido');
+    }
+
+    const driver = await this.rideRepository.findDriverBySomeCriteria(
+      data.driver.id,
+      data.distance
+    );
+
+    if (!driver) {
+      throw new Error('Motorista não encontrado');
+    }
+
+    if (data.distance < driver.minKm) {
+      throw new Error(`Quilometragem inválida para o motorista.`);
+    }
+
+    await this.rideRepository.save({
+      ...data,
+      driver: {
+        id: driver.id,
+        name: driver.name,
+      },
+    });
+
+    return {
+      success: true,
+    };
   }
 
   async getRideHistory(data: IRideQuery): Promise<RideHistoryResponseDTOType> {

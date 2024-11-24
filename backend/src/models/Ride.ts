@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IRide extends Document {
-  customerId: string;
+  customer_id: string;
   origin: string;
   destination: string;
   distance: number;
@@ -17,15 +17,9 @@ export interface IRide extends Document {
 
 const rideSchema = new Schema<IRide>(
   {
-    customerId: { type: String, required: true },
-    origin: {
-      latitude: { type: String, required: true },
-      longitude: { type: String, required: true },
-    },
-    destination: {
-      latitude: { type: String, required: true },
-      longitude: { type: String, required: true },
-    },
+    customer_id: { type: String, required: true },
+    origin: { type: String, required: true },
+    destination: { type: String, required: true },
     distance: { type: Number, required: true },
     duration: { type: String, required: true },
     driver: {
