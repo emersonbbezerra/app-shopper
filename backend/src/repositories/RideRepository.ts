@@ -22,9 +22,7 @@ export class RideRepository implements IRideRepository {
 
     if (driver) {
       if (distance < driver.minKm) {
-        throw new Error(
-          `Quilometragem inválida para o motorista. Mínimo: ${driver.minKm} km.`
-        );
+        throw new Error('Quilometragem inválida para o motorista');
       }
       return driver;
     } else {
@@ -33,20 +31,9 @@ export class RideRepository implements IRideRepository {
   }
 
   async save(ride: CreateRideRequestDTOType): Promise<IRide> {
-    console.log('RideRepository: save() - Iniciando a inserção da corrida...');
-    console.log('RideRepository: save() - Dados da corrida:', ride);
-    try {
-      const newRide = new Ride(ride);
-      const savedRide = await newRide.save();
-      console.log(
-        'RideRepository: save() - Corrida salva com sucesso:',
-        savedRide
-      );
-      return savedRide;
-    } catch (error) {
-      console.error('RideRepository: save() - Erro ao salvar corrida:', error);
-      throw error;
-    }
+    const newRide = new Ride(ride);
+    const savedRide = await newRide.save();
+    return savedRide;
   }
 
   async findByCustomerAndDriver(

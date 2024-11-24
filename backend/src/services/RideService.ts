@@ -72,7 +72,7 @@ export class RideService implements IRideService {
         routeResponse: route,
       });
     } else {
-      throw new Error('Erro: A rota não possui distância definida');
+      throw new Error('A rota não possui distância definida');
     }
   }
 
@@ -95,7 +95,7 @@ export class RideService implements IRideService {
     }
 
     if (data.distance < driver.minKm) {
-      throw new Error(`Quilometragem inválida para o motorista.`);
+      throw new Error('Quilometragem inválida para o motorista');
     }
 
     await this.rideRepository.save({
