@@ -120,10 +120,6 @@ export class RideService implements IRideService {
       driverId
     );
 
-    if (!driverId) {
-      throw new Error('Motorista inválido');
-    }
-
     if (rides.length === 0) {
       throw new Error('Nenhum registro encontrado');
     }

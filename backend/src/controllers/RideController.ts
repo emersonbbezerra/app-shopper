@@ -90,8 +90,8 @@ export class RideController {
       ) {
         if (error.message === 'Motorista não encontrado') {
           res.status(404).json({
-            error_code: 'DRIVER_NOT_FOUND',
-            error_description: 'Motorista não encontrado',
+            error_code: 'NO_RIDES_FOUND',
+            error_description: 'Nenhum registro encontrado',
           });
         } else if (
           error.message === 'Quilometragem inválida para o motorista'
@@ -99,6 +99,11 @@ export class RideController {
           res.status(406).json({
             error_code: 'INVALID_DISTANCE',
             error_description: 'Quilometragem inválida para o motorista',
+          });
+        } else if (error.message === 'ID do motorista inválido') {
+          res.status(400).json({
+            error_code: 'INVALID_DRIVER',
+            error_description: 'Motorista inválido',
           });
         }
       } else {
@@ -113,9 +118,8 @@ export class RideController {
   static async getRideHistory(req: Request, res: Response) {
     try {
       const customerId = req.params.customer_id;
-      const driverId = req.query.driver_id
-        ? parseInt(req.query.driver_id.toString(), 10)
-        : undefined;
+      const driverIdString = req.query.driver_id as string | undefined;
+      let driverId: number | undefined;
 
       if (!customerId) {
         return res.status(400).json({
@@ -124,11 +128,17 @@ export class RideController {
         });
       }
 
-      if (driverId !== undefined && isNaN(driverId)) {
-        return res.status(400).json({
-          error_code: 'INVALID_DRIVER',
-          error_description: 'Motorista inválido',
-        });
+      if (driverIdString) {
+        const isValidDriverId = /^\d+$/.test(driverIdString);
+
+        if (!isValidDriverId) {
+          return res.status(400).json({
+            error_code: 'INVALID_DRIVER',
+            error_description: 'Motorista inválido',
+          });
+        }
+
+        driverId = parseInt(driverIdString, 10);
       }
 
       const rideHistory: RideHistoryResponseDTOType =
@@ -142,15 +152,7 @@ export class RideController {
         });
       } else if (
         error instanceof Error &&
-        error.message === 'Motorista inválido'
-      ) {
-        res.status(400).json({
-          error_code: 'INVALID_DRIVER',
-          error_description: 'Motorista inválido',
-        });
-      } else if (
-        error instanceof Error &&
-        error.message === 'Nenhuma registro encontrado'
+        error.message === 'Nenhum registro encontrado'
       ) {
         res.status(404).json({
           error_code: 'NO_RIDES_FOUND',
