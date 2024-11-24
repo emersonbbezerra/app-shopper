@@ -3,7 +3,6 @@ import { CreateRideRequestDTOType } from '../dtos/CreateRideRequestDTO';
 import { EstimateRideRequestDTOType } from '../dtos/EstimateRideRequestDTO';
 import { EstimateRideResponseDTOType } from '../dtos/EstimateRideResponseDTO';
 import { RideHistoryResponseDTOType } from '../dtos/RideHistoryResponseDTO';
-import { IRideQuery } from './IRideQuery';
 
 export interface IRideService {
   estimateRide(
@@ -12,5 +11,8 @@ export interface IRideService {
   confirmRide(
     data: CreateRideRequestDTOType
   ): Promise<ConfirmRideResponseDTOType>;
-  getRideHistory(data: IRideQuery): Promise<RideHistoryResponseDTOType>;
+  getRideHistory(
+    customer_id: string,
+    driverId: number
+  ): Promise<RideHistoryResponseDTOType>;
 }

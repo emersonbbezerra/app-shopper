@@ -49,13 +49,14 @@ export class RideRepository implements IRideRepository {
     }
   }
 
-  async findByCustomerAndDriver(data: IRideQuery): Promise<IRide[]> {
-    const query: IRideQuery = { customer_id: data.customer_id };
-
-    if (data['driver.id']) {
-      query['driver.id'] = data['driver.id'];
+  async findByCustomerAndDriver(
+    customerId: string,
+    driverId: number | undefined
+  ): Promise<IRide[]> {
+    const query: IRideQuery = { customer_id: customerId };
+    if (driverId) {
+      query['driver.id'] = driverId;
     }
-
     return await Ride.find(query).sort({ createdAt: -1 });
   }
 }

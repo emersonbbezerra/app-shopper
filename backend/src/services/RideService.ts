@@ -13,7 +13,6 @@ import {
   RideHistoryResponseDTOType,
 } from '../dtos/RideHistoryResponseDTO';
 import { IGoogleMapsService } from '../interfaces/IGoogleMapsService';
-import { IRideQuery } from '../interfaces/IRideQuery';
 import { IRideRepository } from '../interfaces/IRideRepository';
 import { IRideService } from '../interfaces/IRideService';
 import Driver, { IDriver } from '../models/Driver';
@@ -112,12 +111,27 @@ export class RideService implements IRideService {
     };
   }
 
-  async getRideHistory(data: IRideQuery): Promise<RideHistoryResponseDTOType> {
-    const rides = await this.rideRepository.findByCustomerAndDriver(data);
+  async getRideHistory(
+    customerId: string,
+    driverId: number | undefined
+  ): Promise<RideHistoryResponseDTOType> {
+    const rides = await this.rideRepository.findByCustomerAndDriver(
+      customerId,
+      driverId
+    );
+
+    if (!driverId) {
+      throw new Error('Motorista inválido');
+    }
+
+    if (rides.length === 0) {
+      throw new Error('Nenhum registro encontrado');
+    }
+
     const rideHistory = {
-      customer_id: data.customer_id,
+      customer_id: customerId,
       rides: rides.map((ride) => ({
-        id: ride._id,
+        id: ride._id.toString(),
         date: ride.createdAt,
         origin: ride.origin,
         destination: ride.destination,
@@ -133,7 +147,7 @@ export class RideService implements IRideService {
     return RideHistoryResponseDTO.parse(rideHistory);
   }
 
-  public async estimateAvailableDrivers(distance: number) {
+  async estimateAvailableDrivers(distance: number) {
     return await this.getAvailableDrivers(distance);
   }
 

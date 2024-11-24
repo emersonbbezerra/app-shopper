@@ -11,7 +11,6 @@ export interface IDriver extends Document {
   ratePerKm: number;
   minKm: number;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 const driverSchema = new Schema<IDriver>(

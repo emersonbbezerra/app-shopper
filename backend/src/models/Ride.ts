@@ -1,6 +1,7 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, ObjectId, Schema } from 'mongoose';
 
 export interface IRide extends Document {
+  _id: ObjectId;
   customer_id: string;
   origin: string;
   destination: string;
@@ -12,7 +13,6 @@ export interface IRide extends Document {
   };
   value: number;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 const rideSchema = new Schema<IRide>(
