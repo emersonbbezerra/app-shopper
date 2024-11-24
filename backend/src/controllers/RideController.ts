@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { ConfirmRideResponseDTOType } from '../dtos/ConfirmRideResponseDTO';
-import { CreateRideDTO } from '../dtos/CreateRideDTO';
+import { CreateRideRequestDTO } from '../dtos/CreateRideRequestDTO';
 import { EstimateRideRequestDTO } from '../dtos/EstimateRideRequestDTO';
 import { EstimateRideResponseDTOType } from '../dtos/EstimateRideResponseDTO';
+import { RideHistoryResponseDTOType } from '../dtos/RideHistoryResponseDTO';
 import { RideRepository } from '../repositories/RideRepository';
 import { RideService } from '../services/RideService';
 import { GoogleMapsService } from '../utils/GoogleMapsService';
@@ -61,7 +62,7 @@ export class RideController {
       } else {
         res.status(500).json({
           error_code: 'UNKNOWN_ERROR',
-          error_description: 'An unknown error occurred',
+          error_description: 'Um erro desconhecido ocorreu',
         });
       }
     }
@@ -69,7 +70,7 @@ export class RideController {
 
   static async confirmRide(req: Request, res: Response) {
     try {
-      const data = CreateRideDTO.parse(req.body);
+      const data = CreateRideRequestDTO.parse(req.body);
       await rideService.confirmRide(data);
       const response: ConfirmRideResponseDTOType = {
         success: true,
@@ -79,33 +80,88 @@ export class RideController {
       if (error instanceof ZodError) {
         res.status(400).json({
           error_code: 'INVALID_DATA',
-          error_description: error.errors,
+          error_description:
+            'Os dados fornecidos no corpo da requisição são inválidos',
         });
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error
+      ) {
+        if (error.message === 'Motorista não encontrado') {
+          res.status(404).json({
+            error_code: 'NO_RIDES_FOUND',
+            error_description: 'Nenhum registro encontrado',
+          });
+        } else if (
+          error.message === 'Quilometragem inválida para o motorista'
+        ) {
+          res.status(406).json({
+            error_code: 'INVALID_DISTANCE',
+            error_description: 'Quilometragem inválida para o motorista',
+          });
+        } else if (error.message === 'ID do motorista inválido') {
+          res.status(400).json({
+            error_code: 'INVALID_DRIVER',
+            error_description: 'Motorista inválido',
+          });
+        }
       } else {
         res.status(500).json({
           error_code: 'UNKNOWN_ERROR',
-          error_description: 'An unknown error occurred',
+          error_description: 'Um erro desconhecido ocorreu',
         });
       }
     }
   }
 
   static async getRideHistory(req: Request, res: Response) {
-    const customerId = req.params.customer_id;
     try {
-      const rideHistory = await rideService.getRideHistory(customerId);
+      const customerId = req.params.customer_id;
+      const driverIdString = req.query.driver_id as string | undefined;
+      let driverId: number | undefined;
+
+      if (!customerId) {
+        return res.status(400).json({
+          error_code: 'MISSING_CUSTOMER_ID',
+          error_description: 'O ID do usuário é obrigatório.',
+        });
+      }
+
+      if (driverIdString) {
+        const isValidDriverId = /^\d+$/.test(driverIdString);
+
+        if (!isValidDriverId) {
+          return res.status(400).json({
+            error_code: 'INVALID_DRIVER',
+            error_description: 'Motorista inválido',
+          });
+        }
+
+        driverId = parseInt(driverIdString, 10);
+      }
+
+      const rideHistory: RideHistoryResponseDTOType =
+        await rideService.getRideHistory(customerId, driverId);
       res.status(200).json(rideHistory);
-    } catch (error) {
-      console.error('Error occurred:', error); // Logando o erro
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         res.status(400).json({
           error_code: 'INVALID_DATA',
           error_description: error.errors,
         });
+      } else if (
+        error instanceof Error &&
+        error.message === 'Nenhum registro encontrado'
+      ) {
+        res.status(404).json({
+          error_code: 'NO_RIDES_FOUND',
+          error_description: 'Nenhum registro encontrado',
+        });
       } else {
         res.status(500).json({
           error_code: 'UNKNOWN_ERROR',
-          error_description: 'An unknown error occurred',
+          error_description: 'Um erro desconhecido ocorreu.',
         });
       }
     }
