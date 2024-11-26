@@ -10,3 +10,7 @@ build
 
 # Environment variables
 .env
+
+# Ignorar arquivos de configuração de desenvolvimento
+Dockerfile.dev
+docker-compose.dev.yml
