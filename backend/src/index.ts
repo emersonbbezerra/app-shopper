@@ -1,3 +1,4 @@
+import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import routes from '../src/routes/routes';
@@ -9,13 +10,21 @@ const app = express();
 const port = process.env.PORT || 8080;
 const dbInstance = Database.getInstance();
 
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
+app.use(express.json());
 async function startServer() {
   try {
     await dbInstance.connect(
       process.env.MONGO_URI || 'mongodb://localhost:27017/app-shopper'
     );
 
-    app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
     app.use('/', routes);
