@@ -1,4 +1,4 @@
-import { Client, TravelMode } from '@googlemaps/google-maps-services-js';
+import { Client } from '@googlemaps/google-maps-services-js';
 import { IGoogleMapsService } from '../interfaces/IGoogleMapsService';
 
 export class GoogleMapsService implements IGoogleMapsService {
@@ -16,7 +16,6 @@ export class GoogleMapsService implements IGoogleMapsService {
         params: {
           origin,
           destination,
-          mode: TravelMode.driving,
           key: this.apiKey,
         },
       });
@@ -33,6 +32,7 @@ export class GoogleMapsService implements IGoogleMapsService {
           latitude: leg.end_location.lat,
           longitude: leg.end_location.lng,
         },
+        polyline: route.overview_polyline.points, // Nova linha
         distance: leg.distance.value,
         duration: leg.duration.text,
       };
