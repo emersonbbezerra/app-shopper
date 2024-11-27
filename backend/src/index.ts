@@ -1,12 +1,11 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
-import express from 'express';
-import routes from '../src/routes/routes';
+import app from './app';
 import { Database } from './config/Database';
+import routes from './routes';
 
 dotenv.config();
 
-const app = express();
 const port = process.env.PORT || 8080;
 const dbInstance = Database.getInstance();
 
@@ -18,16 +17,13 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use('/', routes);
+
 async function startServer() {
   try {
     await dbInstance.connect(
       process.env.MONGO_URI || 'mongodb://localhost:27017/app-shopper'
     );
-
-    app.use(express.urlencoded({ extended: true }));
-
-    app.use('/', routes);
 
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
