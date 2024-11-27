@@ -1,30 +1,65 @@
 import { Button, Container, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const RequestRide: React.FC = () => {
   const [customerId, setCustomerId] = useState<string>('');
   const [origin, setOrigin] = useState<string>('');
   const [destination, setDestination] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
 
   const handleEstimate = async () => {
     setError('');
     try {
-      const response = await axios.post('http://localhost:8080/ride/estimate', {
-        customer_id: customerId,
-        origin,
-        destination,
-      });
-
-      console.log(response.data);
-    } catch (err: unknown) {
-      setError(
-        'Erro ao estimar a viagem. Verifique os dados e tente novamente.'
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/ride/estimate`,
+        {
+          customer_id: customerId,
+          origin,
+          destination,
+        }
       );
-      console.error(err);
+
+      // Adicione os endereços textuais ao routeResponse
+      const routeResponseWithAddresses = {
+        ...response.data.routeResponse,
+        origin: {
+          ...response.data.routeResponse.origin,
+          address: origin, // Adiciona o endereço textual de origem
+        },
+        destination: {
+          ...response.data.routeResponse.destination,
+          address: destination, // Adiciona o endereço textual de destino
+        },
+      };
+
+      localStorage.setItem(
+        'rideData',
+        JSON.stringify({
+          drivers: response.data.options,
+          route: routeResponseWithAddresses, // Use a versão atualizada
+          customer_id: customerId,
+        })
+      );
+
+      navigate('/options', {
+        state: {
+          drivers: response.data.options,
+          route: routeResponseWithAddresses, // Use a versão atualizada
+          customer_id: customerId,
+        },
+      });
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        setError(error.response.data.error_description);
+      } else {
+        setError('Os dados fornecidos no corpo da requisição são inválidos');
+      }
     }
   };
+
   return (
     <Container style={{ marginTop: '20px' }}>
       <Typography variant="h4" gutterBottom={true}>

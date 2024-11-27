@@ -1,6 +1,8 @@
 import { AppBar, Container, Toolbar, Typography } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
 import RequestRide from './components/RequestRide';
+import RideHistory from './components/RideHistory';
+import TravelOptions from './components/TravelOptions';
 
 function App() {
   return (
@@ -14,7 +16,8 @@ function App() {
       </AppBar>
       <Routes>
         <Route path="/" element={<RequestRide />} />
-        {/* Adicione outras rotas para as telas de Opções de Viagem e Histórico de Viagens */}
+        <Route path="/options" element={<TravelOptions />} />
+        <Route path="/history" element={<RideHistory />} />
       </Routes>
     </Container>
   );
