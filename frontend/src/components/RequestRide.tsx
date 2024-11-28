@@ -12,25 +12,51 @@ const RequestRide: React.FC = () => {
 
   const handleEstimate = async () => {
     setError('');
+    const requestData = {
+      customer_id: customerId, // Manter como string
+      origin,
+      destination,
+    };
+    console.log('Request Data:', requestData);
+    console.log('Backend URL:', process.env.REACT_APP_BACKEND_URI);
+
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/ride/estimate`,
-        {
-          customer_id: customerId,
-          origin,
-          destination,
-        }
+        `${process.env.REACT_APP_BACKEND_URI}/ride/estimate`,
+        requestData
       );
+
+      console.log('API Response:', response.data);
+
+      if (
+        !response.data ||
+        !response.data.data ||
+        !response.data.data.routeResponse ||
+        !response.data.data.origin ||
+        !response.data.data.destination
+      ) {
+        throw new Error('Dados inválidos na resposta da API');
+      }
+
+      // Verificar se 'origin' e 'destination' estão definidos
+      const routeOrigin = response.data.data.origin;
+      const routeDestination = response.data.data.destination;
+
+      if (!routeOrigin || !routeDestination) {
+        throw new Error(
+          'Dados de origem ou destino estão faltando na resposta da API'
+        );
+      }
 
       // Adicione os endereços textuais ao routeResponse
       const routeResponseWithAddresses = {
-        ...response.data.routeResponse,
+        ...response.data.data.routeResponse,
         origin: {
-          ...response.data.routeResponse.origin,
+          ...routeOrigin,
           address: origin, // Adiciona o endereço textual de origem
         },
         destination: {
-          ...response.data.routeResponse.destination,
+          ...routeDestination,
           address: destination, // Adiciona o endereço textual de destino
         },
       };
@@ -38,23 +64,25 @@ const RequestRide: React.FC = () => {
       localStorage.setItem(
         'rideData',
         JSON.stringify({
-          drivers: response.data.options,
+          drivers: response.data.data.options,
           route: routeResponseWithAddresses, // Use a versão atualizada
-          customer_id: customerId,
+          customer_id: customerId, // Manter como string
         })
       );
 
       navigate('/options', {
         state: {
-          drivers: response.data.options,
+          drivers: response.data.data.options,
           route: routeResponseWithAddresses, // Use a versão atualizada
-          customer_id: customerId,
+          customer_id: customerId, // Manter como string
         },
       });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
+        console.error('API Error:', error.response.data);
         setError(error.response.data.error_description);
       } else {
+        console.error('Error:', error);
         setError('Os dados fornecidos no corpo da requisição são inválidos');
       }
     }
