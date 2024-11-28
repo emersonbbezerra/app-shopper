@@ -45,16 +45,31 @@ const RideHistory: React.FC = () => {
         return;
       }
 
-      // Primeiro, busque todas as viagens
+      console.log('Fetching rides for customer ID:', customerId);
+
+      // Buscar histórico de viagens
       const response = await axios.get<{
-        rides: Ride[];
-      }>(`${process.env.REACT_APP_BACKEND_URL}/ride/${customerId}`);
+        message: string;
+        data: {
+          rides: Ride[];
+        };
+      }>(`${process.env.REACT_APP_BACKEND_URI}/ride/${customerId}`);
+
+      console.log('API Response:', response.data);
+
+      if (!response.data || !response.data.data || !response.data.data.rides) {
+        throw new Error('Dados inválidos na resposta da API');
+      }
 
       // Converte distância de metros para quilômetros
-      const ridesWithDistanceInKm = response.data.rides.map((ride: Ride) => ({
-        ...ride,
-        distance: ride.distance / 1000,
-      }));
+      const ridesWithDistanceInKm = response.data.data.rides.map(
+        (ride: Ride) => ({
+          ...ride,
+          distance: ride.distance / 1000,
+        })
+      );
+
+      console.log('Rides with distance in km:', ridesWithDistanceInKm);
 
       // Extrai nomes únicos de motoristas
       const uniqueDriverNames = [
@@ -64,6 +79,8 @@ const RideHistory: React.FC = () => {
         ).map(String),
       ];
 
+      console.log('Unique driver names:', uniqueDriverNames);
+
       // Filtra as viagens se um motorista específico for selecionado
       const filteredRides =
         selectedDriver === 'Todos'
@@ -71,6 +88,8 @@ const RideHistory: React.FC = () => {
           : ridesWithDistanceInKm.filter(
               (ride: Ride) => ride.driver.name === selectedDriver
             );
+
+      console.log('Filtered rides:', filteredRides);
 
       setRides(filteredRides);
       setDrivers(uniqueDriverNames);
@@ -86,11 +105,13 @@ const RideHistory: React.FC = () => {
     } catch (error) {
       setLoading(false);
       if (axios.isAxiosError(error) && error.response) {
+        console.error('API Error:', error.response.data);
         setError(
           error.response.data.error_description ||
             'Erro ao buscar histórico de viagens'
         );
       } else {
+        console.error('Error:', error);
         setError('Erro ao buscar histórico de viagens. Tente novamente.');
       }
     }
