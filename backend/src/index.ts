@@ -1,23 +1,11 @@
-import cors from 'cors';
 import dotenv from 'dotenv';
 import app from './app';
 import { Database } from './config/Database';
-import routes from './routes';
 
 dotenv.config();
 
 const port = process.env.PORT || 8080;
 const dbInstance = Database.getInstance();
-
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URI && 'http://localhost:3000',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
-
-app.use('/', routes);
 
 async function startServer() {
   try {
