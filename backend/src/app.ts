@@ -6,24 +6,23 @@ import routes from './routes';
 const app: Express = express();
 
 const allowedOrigins = [
-  process.env.FRONTEND_URI && 'http://localhost:3000',
+  'http://localhost',
   'http://localhost:80',
+  'http://localhost:3000',
 ];
 
 const corsOptions = {
-  origin: (
-    origin: string | undefined,
-    callback: (err: Error | null, allow: boolean) => void
-  ) => {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'), false);
+      callback(new Error(`Not allowed by CORS: ${origin}`));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+  credentials: true, 
 };
 
 app.use(cors(corsOptions));
