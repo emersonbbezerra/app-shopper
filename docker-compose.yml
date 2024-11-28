@@ -7,7 +7,9 @@ services:
       - "8080:8080"
     environment:
       - MONGO_URI=mongodb://mongo_container:27017/app-shopper
+      - FRONTEND_URI=http://localhost
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ROUTES_API_URI=https://routes.googleapis.com/directions/v2:computeRoutes
     depends_on:
       - mongodb
 
@@ -25,10 +27,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "80:80"
-    environment:
-      - REACT_APP_GOOGLE_API_KEY=${REACT_APP_GOOGLE_API_KEY}
     depends_on:
       - backend
+    environment:
+      - REACT_APP_GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - REACT_APP_BACKEND_URI=http://localhost:8080
 
 volumes:
   mongo-data:
