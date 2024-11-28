@@ -51,20 +51,24 @@ const TravelOptions: React.FC = () => {
         throw new Error('Endereço de destino não encontrado');
       }
 
-      if (!route.distance) {
+      // Ajuste para acessar a distância dentro de `legs`
+      const legs = route.routes[0]?.legs;
+      if (!legs || !legs[0]?.distance) {
         throw new Error('Distância não encontrada');
       }
+      const distance = legs[0].distance.value;
 
-      if (!route.duration) {
+      if (!legs[0].duration) {
         throw new Error('Duração não encontrada');
       }
+      const duration = legs[0].duration.text;
 
       const requestData = {
         customer_id: customerId,
         origin: route.origin.address,
         destination: route.destination.address,
-        distance: Number(route.distance),
-        duration: route.duration,
+        distance: Number(distance),
+        duration: duration,
         driver: {
           id: driverId,
           name: selectedDriver.name,
@@ -75,7 +79,7 @@ const TravelOptions: React.FC = () => {
       console.log('Request Data:', requestData);
 
       await axios.patch(
-        `${process.env.REACT_APP_BACKEND_URL}/ride/confirm`,
+        `${process.env.REACT_APP_BACKEND_URI}/ride/confirm`,
         requestData
       );
       navigate('/history');
@@ -253,4 +257,5 @@ const TravelOptions: React.FC = () => {
     </Container>
   );
 };
+
 export default TravelOptions;
