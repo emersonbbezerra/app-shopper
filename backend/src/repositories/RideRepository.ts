@@ -1,5 +1,9 @@
 import { Model } from 'mongoose';
 import { CreateRideRequestDTOType } from '../dtos/CreateRideRequestDTO';
+import {
+  DriverNotFoundException,
+  InvalidDistanceException,
+} from '../exceptions/DomainExceptions';
 import { IRideQuery } from '../interfaces/IRideQuery';
 import { IRideRepository } from '../interfaces/IRideRepository';
 import Driver, { IDriver } from '../models/Driver';
@@ -20,20 +24,20 @@ export class RideRepository implements IRideRepository {
       _id: driverId,
     });
 
-    if (driver) {
-      if (distance < driver.minKm) {
-        throw new Error('Quilometragem inválida para o motorista');
-      }
-      return driver;
-    } else {
-      throw new Error('Motorista não encontrado');
+    if (!driver) {
+      throw new DriverNotFoundException();
     }
+
+    if (distance < driver.minKm) {
+      throw new InvalidDistanceException();
+    }
+
+    return driver;
   }
 
   async save(ride: CreateRideRequestDTOType): Promise<IRide> {
     const newRide = new Ride(ride);
-    const savedRide = await newRide.save();
-    return savedRide;
+    return await newRide.save();
   }
 
   async findByCustomerAndDriver(

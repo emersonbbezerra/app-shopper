@@ -1,7 +1,7 @@
-import mongoose, { Document, ObjectId, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IRide extends Document {
-  _id: ObjectId;
+  _id: number;
   customer_id: string;
   origin: string;
   destination: string;
@@ -17,6 +17,7 @@ export interface IRide extends Document {
 
 const rideSchema = new Schema<IRide>(
   {
+    _id: { type: Number, required: true },
     customer_id: { type: String, required: true },
     origin: { type: String, required: true },
     destination: { type: String, required: true },
