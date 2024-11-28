@@ -4,20 +4,23 @@ export const EstimateRideRequestDTO = z
   .object({
     customer_id: z
       .string()
-      .min(1, { message: 'O ID do usuário é obrigatório.' }),
-    origin: z
-      .string()
-      .min(1, { message: 'O endereço de Origem é obrigatório.' }),
-    destination: z
-      .string()
-      .min(1, { message: 'O endereço de Destino é obrigatório.' }),
+      .min(1, { message: 'O id do usuário não pode estar em branco' }),
+    origin: z.string().min(1, {
+      message:
+        'Os endereços de origem e destino recebidos não podem estar em branco',
+    }),
+    destination: z.string().min(1, {
+      message:
+        'Os endereços de origem e destino recebidos não podem estar em branco',
+    }),
   })
   .superRefine(({ origin, destination }, ctx) => {
     if (destination === origin) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['destination'],
-        message: 'Os endereços de Origem e Destino não podem ser iguais.',
+        message:
+          'Os endereços de origem e destino não podem ser o mesmo endereço',
       });
     }
   });

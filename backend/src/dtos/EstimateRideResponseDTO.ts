@@ -24,7 +24,7 @@ export const EstimateRideResponseDTO = z.object({
       value: z.number(),
     })
   ),
-  routeResponse: z.object({}),
+  routeResponse: z.any(),
 });
 
 export type EstimateRideResponseDTOType = z.infer<

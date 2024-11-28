@@ -1,5 +1,8 @@
-import { Client, TravelMode } from '@googlemaps/google-maps-services-js';
+import { Client } from '@googlemaps/google-maps-services-js';
+import dotenv from 'dotenv';
 import { IGoogleMapsService } from '../interfaces/IGoogleMapsService';
+
+dotenv.config();
 
 export class GoogleMapsService implements IGoogleMapsService {
   private apiKey: string;
@@ -7,6 +10,9 @@ export class GoogleMapsService implements IGoogleMapsService {
 
   constructor() {
     this.apiKey = process.env.GOOGLE_API_KEY || '';
+    if (!this.apiKey) {
+      throw new Error('Google Maps API key is not defined');
+    }
     this.client = new Client({});
   }
 
@@ -16,7 +22,6 @@ export class GoogleMapsService implements IGoogleMapsService {
         params: {
           origin,
           destination,
-          mode: TravelMode.driving,
           key: this.apiKey,
         },
       });
@@ -33,8 +38,10 @@ export class GoogleMapsService implements IGoogleMapsService {
           latitude: leg.end_location.lat,
           longitude: leg.end_location.lng,
         },
+        polyline: route.overview_polyline.points,
         distance: leg.distance.value,
         duration: leg.duration.text,
+        routeResponse: response.data,
       };
     } catch (error) {
       console.error('Error while fetching route:', error);

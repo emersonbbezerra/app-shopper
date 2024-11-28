@@ -17,6 +17,7 @@
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.0",
     "axios": "^1.7.7",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "mongoose": "^8.8.2",
@@ -24,11 +25,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.9.1",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
+    "mongodb-memory-server": "^10.1.2",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",

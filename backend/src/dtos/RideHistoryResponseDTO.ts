@@ -4,7 +4,7 @@ export const RideHistoryResponseDTO = z.object({
   customer_id: z.string(),
   rides: z.array(
     z.object({
-      id: z.string(),
+      id: z.number(),
       date: z.date(),
       origin: z.string(),
       destination: z.string(),

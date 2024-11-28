@@ -16,6 +16,18 @@ import { IGoogleMapsService } from '../interfaces/IGoogleMapsService';
 import { IRideRepository } from '../interfaces/IRideRepository';
 import { IRideService } from '../interfaces/IRideService';
 import Driver, { IDriver } from '../models/Driver';
+import Ride, { IRide } from '../models/Ride';
+import { getNextSequenceValue } from '../utils/getNextSequenceValue';
+
+import {
+  BlankFieldException,
+  DriverNotFoundException,
+  InvalidDataException,
+  InvalidDistanceException,
+  InvalidDriverException,
+  NoRidesFoundException,
+  SameAddressException,
+} from '../exceptions/DomainExceptions';
 
 export class RideService implements IRideService {
   private rideRepository: IRideRepository;
@@ -32,6 +44,8 @@ export class RideService implements IRideService {
   async estimateRide(
     data: EstimateRideRequestDTOType
   ): Promise<EstimateRideResponseDTOType> {
+    this.validateRideRequest(data);
+
     const { origin, destination } = data;
     const route = await this.googleMapsService.calculateRoute(
       origin,
@@ -39,41 +53,35 @@ export class RideService implements IRideService {
     );
 
     if (!route || !route.origin || !route.destination || !route.distance) {
-      throw new Error('Erro ao calcular a rota');
+      throw new InvalidDataException('Erro ao calcular a rota');
     }
 
-    const availableDrivers = await this.getAvailableDrivers(route.distance!);
+    const availableDrivers = await this.getAvailableDrivers(route.distance);
 
-    if (route.distance) {
-      return EstimateRideResponseDTO.parse({
-        origin: {
-          latitude: route.origin.latitude,
-          longitude: route.origin.longitude,
+    return EstimateRideResponseDTO.parse({
+      origin: {
+        latitude: route.origin.latitude,
+        longitude: route.origin.longitude,
+      },
+      destination: {
+        latitude: route.destination.latitude,
+        longitude: route.destination.longitude,
+      },
+      distance: route.distance / 1000,
+      duration: route.duration,
+      options: availableDrivers.map((driver) => ({
+        id: driver.id,
+        name: driver.name,
+        description: driver.description,
+        vehicle: driver.vehicle,
+        review: {
+          rating: driver.review?.rating || 0,
+          comment: driver.review?.comment || '',
         },
-        destination: {
-          latitude: route.destination.latitude,
-          longitude: route.destination.longitude,
-        },
-        distance: route.distance / 1000,
-        duration: route.duration,
-        options: availableDrivers.map((driver) => ({
-          id: driver.id,
-          name: driver.name,
-          description: driver.description,
-          vehicle: driver.vehicle,
-          review: {
-            rating: driver.review?.rating || 0,
-            comment: driver.review?.comment || '',
-          },
-          value: route.distance
-            ? (route.distance / 1000) * driver.ratePerKm
-            : 0,
-        })),
-        routeResponse: route,
-      });
-    } else {
-      throw new Error('A rota não possui distância definida');
-    }
+        value: route.distance ? (route.distance / 1000) * driver.ratePerKm : 0,
+      })),
+      routeResponse: route.routeResponse,
+    });
   }
 
   async confirmRide(
@@ -82,7 +90,7 @@ export class RideService implements IRideService {
     CreateRideRequestDTO.parse(data);
 
     if (!data.driver.id) {
-      throw new Error('ID do motorista inválido');
+      throw new InvalidDriverException();
     }
 
     const driver = await this.rideRepository.findDriverBySomeCriteria(
@@ -91,20 +99,30 @@ export class RideService implements IRideService {
     );
 
     if (!driver) {
-      throw new Error('Motorista não encontrado');
+      throw new DriverNotFoundException();
     }
 
     if (data.distance < driver.minKm) {
-      throw new Error('Quilometragem inválida para o motorista');
+      throw new InvalidDistanceException();
     }
 
-    await this.rideRepository.save({
-      ...data,
+    const rideId = await getNextSequenceValue('rideId');
+
+    const newRide: IRide = new Ride({
+      _id: rideId,
+      customer_id: data.customer_id,
+      origin: data.origin,
+      destination: data.destination,
+      distance: data.distance,
+      duration: data.duration,
       driver: {
         id: driver.id,
         name: driver.name,
       },
+      value: data.value,
     });
+
+    await newRide.save();
 
     return {
       success: true,
@@ -115,19 +133,23 @@ export class RideService implements IRideService {
     customerId: string,
     driverId: number | undefined
   ): Promise<RideHistoryResponseDTOType> {
+    if (!customerId) {
+      throw new BlankFieldException('ID do usuário');
+    }
+
     const rides = await this.rideRepository.findByCustomerAndDriver(
       customerId,
       driverId
     );
 
     if (rides.length === 0) {
-      throw new Error('Nenhum registro encontrado');
+      throw new NoRidesFoundException();
     }
 
     const rideHistory = {
       customer_id: customerId,
       rides: rides.map((ride) => ({
-        id: ride._id.toString(),
+        id: ride._id,
         date: ride.createdAt,
         origin: ride.origin,
         destination: ride.destination,
@@ -170,5 +192,22 @@ export class RideService implements IRideService {
     availableDrivers.sort((a, b) => a.value - b.value);
 
     return availableDrivers;
+  }
+
+  private validateRideRequest(
+    data: EstimateRideRequestDTOType | CreateRideRequestDTOType
+  ) {
+    if (!data.origin?.trim()) {
+      throw new BlankFieldException('origem');
+    }
+    if (!data.destination?.trim()) {
+      throw new BlankFieldException('destino');
+    }
+    if (!data.customer_id) {
+      throw new BlankFieldException('ID do usuário');
+    }
+    if (data.origin === data.destination) {
+      throw new SameAddressException();
+    }
   }
 }
