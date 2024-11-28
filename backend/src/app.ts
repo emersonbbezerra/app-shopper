@@ -6,7 +6,7 @@ import routes from './routes';
 const app: Express = express();
 
 const allowedOrigins = [
-  process.env.FRONTEND_URI || 'http://localhost:3000',
+  process.env.FRONTEND_URI && 'http://localhost:3000',
   'http://localhost:80',
 ];
 
