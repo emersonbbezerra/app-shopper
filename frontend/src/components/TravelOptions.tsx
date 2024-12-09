@@ -12,22 +12,43 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Driver } from '../types/Driver';
 
-const libraries: string[] = ['marker', 'geometry'];
+const libraries: ['places', 'geometry', 'marker'] = [
+  'places',
+  'geometry',
+  'marker',
+];
+
+const mapContainerStyle = { height: '400px', width: '100%' };
+const mapStyles = [
+  {
+    featureType: 'road',
+    elementType: 'labels',
+    stylers: [{ visibility: 'on' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ zIndex: 1 }],
+  },
+];
+
+// Definindo tipo para os dados da rota
+type RouteData = {
+  origin: { latitude: number; longitude: number; address: string };
+  destination: { latitude: number; longitude: number; address: string };
+  routes: Array<{
+    legs: Array<{ distance: { value: number }; duration: { text: string } }>;
+  }>;
+  polyline?: string;
+};
 
 const TravelOptions: React.FC = () => {
   const location = useLocation();
   const storedData = JSON.parse(localStorage.getItem('rideData') || '{}');
   const drivers: Driver[] = location.state?.drivers || storedData.drivers || [];
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const route: any = location.state?.route || storedData.route || {};
+  const route: RouteData = location.state?.route || storedData.route || {};
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
-
-  const mapContainerStyle = {
-    height: '400px',
-    width: '100%',
-  };
 
   const handleConfirmRide = async (driverId: number) => {
     setError('');
@@ -35,40 +56,23 @@ const TravelOptions: React.FC = () => {
       const customerId = location.state?.customer_id || storedData.customer_id;
       const selectedDriver = drivers.find((driver) => driver.id === driverId);
 
-      if (!customerId) {
-        throw new Error('ID do usuário não encontrado');
-      }
-
-      if (!selectedDriver) {
-        throw new Error('Motorista inválido');
-      }
-
-      if (!route.origin || !route.origin.address) {
+      if (!customerId) throw new Error('ID do usuário não encontrado');
+      if (!selectedDriver) throw new Error('Motorista inválido');
+      if (!route.origin?.address)
         throw new Error('Endereço de origem não encontrado');
-      }
-
-      if (!route.destination || !route.destination.address) {
+      if (!route.destination?.address)
         throw new Error('Endereço de destino não encontrado');
-      }
 
-      // Ajuste para acessar a distância dentro de `legs`
-      const legs = route.routes[0]?.legs;
-      if (!legs || !legs[0]?.distance) {
-        throw new Error('Distância não encontrada');
-      }
-      const distance = legs[0].distance.value;
-
-      if (!legs[0].duration) {
-        throw new Error('Duração não encontrada');
-      }
-      const duration = legs[0].duration.text;
+      const leg = route.routes[0]?.legs?.[0];
+      if (!leg?.distance?.value) throw new Error('Distância não encontrada');
+      if (!leg.duration?.text) throw new Error('Duração não encontrada');
 
       const requestData = {
         customer_id: customerId,
         origin: route.origin.address,
         destination: route.destination.address,
-        distance: Number(distance),
-        duration: duration,
+        distance: Number(leg.distance.value),
+        duration: leg.duration.text,
         driver: {
           id: driverId,
           name: selectedDriver.name,
@@ -76,157 +80,121 @@ const TravelOptions: React.FC = () => {
         value: Number(selectedDriver.value),
       };
 
-      console.log('Request Data:', requestData);
-
       await axios.patch(
         `${process.env.REACT_APP_BACKEND_URI}/ride/confirm`,
         requestData
       );
       navigate('/history');
     } catch (error) {
-      let errorMessage = 'Erro desconhecido ao confirmar corrida';
-
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          errorMessage =
-            error.response.data.error_description ||
-            'Erro ao processar a solicitação';
-          console.error('Erro do servidor:', error.response.data);
-        } else if (error.request) {
-          errorMessage = 'Não foi possível conectar ao servidor';
-          console.error('Erro de requisição:', error.request);
-        } else {
-          errorMessage = error.message;
-          console.error('Erro de configuração:', error.message);
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.error_description ||
+          'Erro de conexão com o servidor'
+        : (error as Error).message || 'Erro desconhecido ao confirmar corrida';
       setError(errorMessage);
       console.error('Erro completo:', error);
     }
   };
 
-  const onLoad = async (map: google.maps.Map) => {
-    const bounds = new window.google.maps.LatLngBounds();
-    bounds.extend({
-      lat: route.origin?.latitude,
-      lng: route.origin?.longitude,
-    });
-    bounds.extend({
-      lat: route.destination?.latitude,
-      lng: route.destination?.longitude,
-    });
-
-    map.fitBounds(bounds);
-
-    map.setOptions({
-      styles: [
-        {
-          featureType: 'road',
-          elementType: 'labels',
-          stylers: [{ visibility: 'on' }],
-        },
-        {
-          featureType: 'road',
-          elementType: 'geometry',
-          stylers: [{ zIndex: 1 }],
-        },
-      ],
-    });
-
-    const { AdvancedMarkerElement } = (await google.maps.importLibrary(
-      'marker'
-    )) as google.maps.MarkerLibrary;
-
-    new AdvancedMarkerElement({
-      map: map,
-      position: { lat: route.origin?.latitude, lng: route.origin?.longitude },
+  const addMarkersToMap = (map: google.maps.Map) => {
+    new google.maps.marker.AdvancedMarkerElement({
+      map: map, // Adiciona o marcador de origem ao mapa
+      position: { lat: route.origin.latitude, lng: route.origin.longitude },
       title: 'Origem',
     });
 
-    new AdvancedMarkerElement({
-      map: map,
+    new google.maps.marker.AdvancedMarkerElement({
+      map: map, // Adiciona o marcador de destino ao mapa
       position: {
-        lat: route.destination?.latitude,
-        lng: route.destination?.longitude,
+        lat: route.destination.latitude,
+        lng: route.destination.longitude,
       },
       title: 'Destino',
     });
+  };
 
-    if (route.polyline) {
-      const decodedPath = google.maps.geometry.encoding.decodePath(
-        route.polyline
-      );
+  const addPolylineToMap = (map: google.maps.Map, polyline: string) => {
+    if (!polyline) return; // Não faz nada se não houver uma polyline
 
-      const borderLine = new google.maps.Polyline({
+    const decodedPath = google.maps.geometry.encoding.decodePath(polyline);
+
+    const createPolyline = (options: google.maps.PolylineOptions) =>
+      new google.maps.Polyline({
         path: decodedPath,
         geodesic: true,
-        strokeColor: '#0A11D8',
-        strokeOpacity: 1,
-        strokeWeight: 7,
-        zIndex: 1,
-      });
+        ...options,
+      }).setMap(map);
 
-      const innerLine = new google.maps.Polyline({
-        path: decodedPath,
-        geodesic: true,
-        strokeColor: '#0F53FF',
-        strokeOpacity: 1,
-        strokeWeight: 4,
-        zIndex: 1,
-      });
+    createPolyline({
+      strokeColor: '#0A11D8',
+      strokeOpacity: 1,
+      strokeWeight: 7,
+      zIndex: 1,
+    });
 
-      const arrowIcon = {
-        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-        scale: 4,
-        strokeColor: '#0A11D8',
-        strokeWeight: 2,
-        fillColor: '#0F53FF',
-        fillOpacity: 1,
-      };
+    createPolyline({
+      strokeColor: '#0F53FF',
+      strokeOpacity: 1,
+      strokeWeight: 4,
+      zIndex: 2,
+    });
 
-      const lineWithIcons = new google.maps.Polyline({
-        path: decodedPath,
-        geodesic: true,
-        strokeColor: 'transparent',
-        zIndex: 1,
-        icons: [
-          {
-            icon: arrowIcon,
-            offset: '50%',
-            repeat: '200px',
+    createPolyline({
+      strokeColor: 'transparent',
+      zIndex: 3,
+      icons: [
+        {
+          icon: {
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 4,
+            strokeColor: '#0A11D8',
+            strokeWeight: 2,
+            fillColor: '#0F53FF',
+            fillOpacity: 1,
           },
-        ],
-      });
+          offset: '50%',
+          repeat: '200px',
+        },
+      ],
+    });
+  };
 
-      borderLine.setMap(map);
-      innerLine.setMap(map);
-      lineWithIcons.setMap(map);
+  const onLoad = (map: google.maps.Map) => {
+    if (!map) return;
+
+    const bounds = new window.google.maps.LatLngBounds();
+    bounds.extend({ lat: route.origin.latitude, lng: route.origin.longitude });
+    bounds.extend({
+      lat: route.destination.latitude,
+      lng: route.destination.longitude,
+    });
+
+    map.fitBounds(bounds);
+    map.setOptions({ styles: mapStyles });
+
+    addMarkersToMap(map); // Adiciona os marcadores diretamente
+    if (route.polyline) {
+      addPolylineToMap(map, route.polyline); // Adiciona a polyline se houver
     }
   };
 
   return (
     <Container style={{ marginTop: '20px' }}>
-      <div>
-        <Typography variant="h5" gutterBottom={true}>
-          Opções de Motoristas
-        </Typography>
-        {error && <Typography color="error">{error}</Typography>}
-        <LoadScript
-          googleMapsApiKey={process.env.REACT_APP_GOOGLE_API_KEY!}
-          libraries={libraries as ['marker', 'geometry']}
-        >
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            onLoad={onLoad}
-            options={{ mapId: 'DEMO_MAP_ID' }}
-          >
-            {/* Os marcadores e a linha do trajeto são adicionados no onLoad */}
-          </GoogleMap>
-        </LoadScript>
-        <Container style={{ marginTop: '20px' }}>
+      <Typography variant="h5" gutterBottom={true}>
+        Opções de Motoristas
+      </Typography>
+      {error && <Typography color="error">{error}</Typography>}
+      <LoadScript
+        googleMapsApiKey={process.env.REACT_APP_GOOGLE_API_KEY!}
+        libraries={libraries}
+      >
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          onLoad={onLoad}
+          options={{ styles: mapStyles }}
+        />
+      </LoadScript>
+      <Container style={{ marginTop: '20px' }}>
+        <Grid container={true} spacing={2}>
           {drivers.map((driver) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={driver.id}>
               <Card>
@@ -235,7 +203,7 @@ const TravelOptions: React.FC = () => {
                   <Typography color="textSecondary">
                     {driver.description}
                   </Typography>
-                  <Typography> Veículo: {driver.vehicle}</Typography>
+                  <Typography>Veículo: {driver.vehicle}</Typography>
                   <Typography>
                     Avaliação: {driver.review.rating}/5 -{' '}
                     {driver.review.comment}
@@ -252,8 +220,8 @@ const TravelOptions: React.FC = () => {
               </Card>
             </Grid>
           ))}
-        </Container>
-      </div>
+        </Grid>
+      </Container>
     </Container>
   );
 };

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "build": "tsup src/index.ts src/scripts/seedDrivers.ts",
     "start": "node dist/index.js",
     "seed:drivers": "node dist/scripts/seedDrivers.js",
